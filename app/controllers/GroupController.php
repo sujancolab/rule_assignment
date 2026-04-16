@@ -72,6 +72,38 @@ class GroupController
         echo json_encode($model->all());
     }
 
+    public function listRules()
+    {
+        $model = new Rule();
+        header('Content-Type: application/json');
+        echo json_encode($model->all());
+    }
+
+    public function createRule()
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $this->validateCSRF($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+
+        $name = trim($data['name'] ?? '');
+        $type = strtoupper(trim($data['type'] ?? ''));
+
+        if ($name === '' || !in_array($type, ['CONDITION', 'DECISION'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid name or type']);
+            return;
+        }
+
+        try {
+            $model = new Rule();
+            $id = $model->create($name, $type);
+            header('Content-Type: application/json');
+            echo json_encode(['id' => $id, 'name' => $name, 'type' => $type]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
     public function updateAssignment()
     {
         $data = json_decode(file_get_contents('php://input'), true);

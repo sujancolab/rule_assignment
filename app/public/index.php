@@ -3,6 +3,7 @@ session_start();
 require __DIR__ . '/../config/database.php';
 require __DIR__ . '/../models/Assignment.php';
 require __DIR__ . '/../models/Group.php';
+require __DIR__ . '/../models/Rule.php';
 require __DIR__ . '/../controllers/GroupController.php';
 
 
@@ -30,6 +31,14 @@ switch ($action) {
 
     case 'list_groups':
         $controller->listGroups();
+        break;
+
+    case 'list_rules':
+        $controller->listRules();
+        break;
+
+    case 'create_rule':
+        $controller->createRule();
         break;
 
     case 'update_assignment':

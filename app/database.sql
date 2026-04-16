@@ -1,5 +1,5 @@
-CREATE DATABASE rule_assigments;
-USE rule_assigments;
+CREATE DATABASE IF NOT EXISTS rule_assignments;
+USE rule_assignments;
 
 -- Rules master table
 CREATE TABLE rules (
@@ -41,3 +41,12 @@ CREATE TABLE idempotency_keys (
 
 -- Index for performance
 CREATE INDEX idx_group_parent ON group_rule_assignments(group_id, parent_id);
+
+-- Sample seed data
+INSERT INTO rules (name, type) VALUES
+('Decision Rule 1','DECISION'),
+('Condition Rule 1','CONDITION'),
+('Decision Rule 2','DECISION'),
+('Decision Rule 3','DECISION');
+
+INSERT INTO rule_groups (name) VALUES ('Group A'), ('Group B');
