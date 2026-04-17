@@ -7,7 +7,7 @@ class Database
 
         // Central DB connection using PDO for security
         return new PDO(
-            "mysql:host=localhost;dbname=rule_assigments",
+            "mysql:host=localhost;dbname=rule_assignments;charset=utf8mb4",
             "root",
             "Sujan1997",
             [
