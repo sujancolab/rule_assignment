@@ -10,8 +10,6 @@
 
 <body class="bg-light">
     <div id="app" class="container py-3">
-
-        <!-- Top compact rule creator -->
         <div class="row align-items-center mb-2">
             <div class="col-auto">
                 <label class="form-label small mb-1">Rule name</label>
@@ -27,7 +25,6 @@
             <div class="col-auto mt-4">
                 <button class="btn btn-primary btn-sm" @click="createRule">Create Rule</button>
             </div>
-            <!-- Create group compact control -->
             <div class="col-auto">
                 <label class="form-label small mb-1">New group</label>
                 <div class="input-group input-group-sm">
@@ -37,18 +34,18 @@
             </div>
         </div>
 
-        <!-- Assignment form (compact) -->
+        <!-- Assignment form -->
         <div class="row align-items-center mb-3 g-2">
             <div class="col-auto">
                 <select class="form-select form-select-sm" v-model.number="form.group_id" @change="onGroupChange">
-                    <option :value="null">Group ID</option>
-                    <option v-for="g in groups" :value="g.id">{{ g.id }} - {{ g.name }}</option>
+                    <option :value="null">-- Select group --</option>
+                    <option v-for="g in groups" :value="g.id">{{ g.name }}</option>
                 </select>
             </div>
             <div class="col-auto" style="min-width:260px;">
                 <select class="form-select form-select-sm" v-model.number="form.rule_id">
                     <option :value="null">-- Select rule --</option>
-                    <option v-for="r in rules" :value="r.id">{{ r.id }} - {{ r.name }} ({{ r.type }})</option>
+                    <option v-for="r in rules" :value="r.id">{{ r.name }} <span v-if="r.type">({{ r.type }})</span></option>
                 </select>
             </div>
             <div class="col-auto" style="min-width:260px;">
@@ -60,31 +57,29 @@
             <div class="col-auto">
                 <button class="btn btn-success btn-sm" @click="submit">Assign Rule</button>
             </div>
-            <div class="col text-end text-muted">Click a node to set as parent</div>
         </div>
 
         <!-- Hierarchy title -->
-        <h6 class="mb-2">Hierarchy for Group <span class="fw-bold" v-if="selectedGroup">{{ selectedGroup }}</span></h6>
+        <h6 class="mb-2">Hierarchy for Group <span class="fw-bold" v-if="selectedGroup">{{ selectedGroupName }}</span></h6>
 
-        <!-- Assignment list (list-group) -->
+        <!-- Assignment list-->
         <div class="card">
             <div class="card-body p-2">
-                <ul class="list-group list-group-flush">
+                <ul class="list-group">
                     <template v-if="tree.length">
-                        <tree-node v-for="n in tree" :key="n.id" :node="n" @set-parent="setParent" @delete-node="deleteNode" @edit-node="editNode"></tree-node>
+                        <tree-node v-for="n in tree" :key="n.id" :node="n" @edit-node="editNode" @delete-node="deleteNode"></tree-node>
                     </template>
                     <li v-else class="list-group-item text-muted">No assignments yet for this group.</li>
                 </ul>
             </div>
         </div>
-
-        <!-- Move modal (Bootstrap look) -->
+        <!-- Move modal  -->
         <div v-if="showMoveModal">
             <div class="modal fade show d-block" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Move assignment #{{ moveTarget }}</h5>
+                            <h5 class="modal-title">Move: {{ moveTargetLabel }}</h5>
                             <button type="button" class="btn-close" @click="showMoveModal=false"></button>
                         </div>
                         <div class="modal-body">
@@ -135,6 +130,18 @@
             mounted() {
                 this.loadGroups();
                 this.loadRules();
+            },
+            computed: {
+                selectedGroupName() {
+                    const g = this.groups.find(x => x.id === this.selectedGroup);
+                    return g ? g.name : (this.selectedGroup || '');
+                },
+                moveTargetLabel() {
+                    if (!this.moveTarget) return '';
+                    const n = this.findNodeById(this.moveTarget);
+                    if (!n) return '';
+                    return `${n.rule_name ? n.rule_name : 'Rule ' + n.rule_id}${n.rule_type ? ' (' + n.rule_type + ')' : ''}`;
+                }
             },
             methods: {
                 async loadGroups() {
@@ -245,7 +252,7 @@
                     const walk = (nodes, depth = 0) => {
                         for (const n of nodes) {
                             const indent = Array(depth).fill('\u2014 ').join('');
-                            const label = `Assignment #${n.id} ${indent}Rule ${n.rule_id}${n.rule_name ? ' — ' + n.rule_name : ''}${n.rule_type ? ' (' + n.rule_type + ')' : ''}`;
+                            const label = `${indent}${n.rule_name ? n.rule_name : 'Rule ' + n.rule_id}${n.rule_type ? ' (' + n.rule_type + ')' : ''}`;
                             out.push({
                                 id: n.id,
                                 label,
@@ -342,6 +349,23 @@
                     this.moveSelectedParent = null;
                     this.moveModalOptions = [];
                     this.loadTree();
+                },
+                findNodeById(id) {
+                    let found = null;
+                    const walk = (nodes) => {
+                        for (const n of nodes) {
+                            if (n.id === id) {
+                                found = n;
+                                return true;
+                            }
+                            if (n.children && n.children.length) {
+                                if (walk(n.children)) return true;
+                            }
+                        }
+                        return false;
+                    };
+                    walk(this.tree);
+                    return found;
                 }
             }
         });
@@ -352,11 +376,11 @@
             template: `
         <li class="list-group-item">
           <div class="d-flex align-items-center">
-            <div>
-              <strong>Assignment #{{ node.id }}</strong>
-              <div class="small text-muted">Rule {{ node.rule_id }} <span v-if="node.rule_name">— {{ node.rule_name }} ({{ node.rule_type }})</span></div>
-              <div class="small text-muted">created: {{ node.created_at }}</div>
-            </div>
+                        <div>
+                            <strong>{{ node.rule_name ? node.rule_name : ('Rule ' + node.rule_id) }}</strong>
+                            <div class="small text-muted">{{ node.rule_type ? ('(' + node.rule_type + ')') : '' }}</div>
+                            <div class="small text-muted">created: {{ node.created_at }}</div>
+                        </div>
             <div class="ms-auto d-flex gap-2">
               <button class="btn btn-sm btn-outline-secondary" @click.stop="$emit('edit-node', node.id)">Move</button>
               <button class="btn btn-sm btn-outline-secondary" @click.stop="$emit('delete-node', node.id)">Delete</button>

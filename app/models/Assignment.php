@@ -23,7 +23,7 @@ class Assignment
         // Calculate hierarchy level
         $tier = $this->getTier($parentId);
 
-        // Enforce max depth rule (business constraint)
+        // Enforce max depth rule tree
         if ($tier > 3) {
             throw new Exception("Max 3 tiers allowed");
         }

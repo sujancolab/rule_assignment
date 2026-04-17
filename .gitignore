@@ -1,0 +1,12 @@
+# Ignore Composer vendor directory
+vendor/
+
+# Ignore environment files
+.env
+
+# IDE/editor
+.idea/
+
+# PHPUnit cache and logs
+.phpunit.result.cache
+coverage/

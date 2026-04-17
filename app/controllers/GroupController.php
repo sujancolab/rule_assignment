@@ -22,8 +22,6 @@ class GroupController
             $model = new Assignment();
             echo $model->create($groupId, $ruleId, $parentId, $key);
         } catch (Exception $e) {
-
-            // Safe error response (no system leakage)
             http_response_code(400);
             echo json_encode(['error' => $e->getMessage()]);
         }
